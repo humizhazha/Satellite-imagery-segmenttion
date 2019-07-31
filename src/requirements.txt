@@ -8,7 +8,6 @@ scikit_image==0.12.3
 tifffile==0.10.0
 opencv-python
 tqdm==4.11.2
-shapely
-Keras==1.2.2
-Theano==0.9.0rc1
+Shapely==1.5.17.post1
+Theano==0.9.0
 tensorflow
