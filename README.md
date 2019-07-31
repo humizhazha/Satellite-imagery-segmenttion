@@ -1,4 +1,4 @@
-# Satellite imagery segmention
+# Satellite-imagery-segmention
 
 
 ## Main software for training neural networks
@@ -21,7 +21,7 @@ tqdm==4.11.2
 Theano==0.9.0
 tensorflow
 opencv-python
-shapely
+shapely==1.5.17.post1
 ```
 1. Install required OS and Python
 2. Install packages with pip install -r requirements.txt
@@ -29,35 +29,49 @@ shapely
 ## File Structure
 ### Data Structure
 ```bash
-data / theree_band / *
-     / sixteen_band / *
+data / theree_band /*
+     / sixteen_band /*
     grid_sizes.csv
     train_wkt_v4.csv
 ```
 ### Overall Structure
 ```bash
 Satellite-imagery-segmention 
-     / data/ *
-     / src / *
-
+     / data/*
+     / src /*
 ```
 ## Prepare data for training
-1. Run python get_3_band_shapes.py
-2. Run cache_train.py
+>1. Run python get_3_band_shapes.py
+>2. Run cache_train.py
 
 ## Train model
 Each class in our solution has separate neural network, so it requires running of several distinct models one by one (or in parallel if there are enough computing resources)
 
-1. Run python unet_buidings.py
-2. Run python unet_structures.py
-3. Run python unet_road.py
-4. Run python unet_track.py
-5. Run python unet_trees.py
-6. Run python unet_crops.py
+>1. Run python unet_buidings.py
+>2. Run python unet_structures.py
+>3. Run python unet_road.py
+>4. Run python unet_track.py
+>5. Run python unet_trees.py
+>6. Run python unet_crops.py
 
 For water predictions we used different method and it can be created by running:
 
-1. Run python fast_water.py
-2. Run python slow_water.py
+>1. Run python fast_water.py
+>2. Run python slow_water.py
 
 Trained weights and model architectures are saved in cache directory and can be used by prediction scripts (see the next section).
+
+## Code Editing
+1. unet_buidings.py, add line 248, 249
+```python
+    set_keras_backend("theano")
+    K.set_image_dim_ordering('th')
+```
+2. unet_buidings.py, add a function in line 36-40
+```python
+    def set_keras_backend(backend):
+        if K.backend() != backend:
+            os.environ['KERAS_BACKEND'] = backend
+            importlib.reload(K)
+            assert K.backend() == backend
+```
