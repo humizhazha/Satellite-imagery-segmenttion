@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 
 
-data_path = '../data'
+data_path = './data'
 
 train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
 gs = pd.read_csv(os.path.join(data_path, 'grid_sizes.csv'), names=['ImageId', 'Xmax', 'Ymin'], skiprows=1)
@@ -37,10 +37,10 @@ def cache_train_16():
 
     num_mask_channels = 10
 
-    f = h5py.File(os.path.join(data_path, 'train_16.h5'), 'w')
+    f = h5py.File(os.path.join(data_path, 'train_16.h5'), 'w', compression='blosc:lz4', compression_opts=9)
 
-    imgs = f.create_dataset('train', (num_train, num_channels, image_rows, image_cols), dtype=np.float16, compression="gzip")
-    imgs_mask = f.create_dataset('train_mask', (num_train, num_mask_channels, image_rows, image_cols), dtype=np.uint8, compression="gzip")
+    imgs = f.create_dataset('train', (num_train, num_channels, image_rows, image_cols), dtype=np.float16)
+    imgs_mask = f.create_dataset('train_mask', (num_train, num_mask_channels, image_rows, image_cols), dtype=np.uint8)
 
     ids = []
 

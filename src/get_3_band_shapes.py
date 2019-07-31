@@ -9,7 +9,7 @@ import os
 from tqdm import tqdm
 import pandas as pd
 
-data_path = '../data'
+data_path = './data'
 
 three_band_path = os.path.join(data_path, 'three_band')
 
