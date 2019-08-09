@@ -12,7 +12,7 @@ import h5py
 import numpy as np
 
 
-data_path = './data'
+data_path = '../data'
 
 train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
 gs = pd.read_csv(os.path.join(data_path, 'grid_sizes.csv'), names=['ImageId', 'Xmax', 'Ymin'], skiprows=1)

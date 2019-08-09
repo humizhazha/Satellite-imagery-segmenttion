@@ -42,7 +42,7 @@ while decrement:
         maxInt = int(maxInt/10)
         decrement = True
 
-data_path = './data'
+data_path = '../data'
 train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
 gs = pd.read_csv(os.path.join(data_path, 'grid_sizes.csv'), names=['ImageId', 'Xmax', 'Ymin'], skiprows=1)
 shapes = pd.read_csv(os.path.join(data_path, '3_shapes.csv'))
@@ -198,9 +198,9 @@ def get_shape(image_id, band=3):
 
 
 def read_image_16(image_id):
-    img_m = np.transpose(tiff.imread("./data/sixteen_band/{}_M.tif".format(image_id)), (1, 2, 0)) / 2047.0
-    img_3 = np.transpose(tiff.imread("./data/three_band/{}.tif".format(image_id)), (1, 2, 0)) / 2047.0
-    img_p = tiff.imread("./data/sixteen_band/{}_P.tif".format(image_id)).astype(np.float32) / 2047.0
+    img_m = np.transpose(tiff.imread("../data/sixteen_band/{}_M.tif".format(image_id)), (1, 2, 0)) / 2047.0
+    img_3 = np.transpose(tiff.imread("../data/three_band/{}.tif".format(image_id)), (1, 2, 0)) / 2047.0
+    img_p = tiff.imread("../data/sixteen_band/{}_P.tif".format(image_id)).astype(np.float32) / 2047.0
 
     height, width, _ = img_3.shape
 
