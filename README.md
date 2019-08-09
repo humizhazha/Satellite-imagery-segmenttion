@@ -62,16 +62,28 @@ For water predictions we used different method and it can be created by running:
 Trained weights and model architectures are saved in cache directory and can be used by prediction scripts (see the next section).
 
 ## Code Editing
-1. unet_buidings.py, add line 248, 249
+1. unet_XXXX.py, add line 248, 249
 ```python
     set_keras_backend("theano")
     K.set_image_dim_ordering('th')
 ```
-2. unet_buidings.py, add a function in line 36-40
+2. unet_XXXX.py, add a function in line 36-40
 ```python
     def set_keras_backend(backend):
         if K.backend() != backend:
             os.environ['KERAS_BACKEND'] = backend
             importlib.reload(K)
             assert K.backend() == backend
+```
+3. unet_XXXX.py, for function jaccard_coef_loss(), edit it in this way:
+```python
+    def jaccard_coef_loss(y_true, y_pred):
+        return -K.log(jaccard_coef(y_true, y_pred)) + K.binary_crossentropy(y_pred, y_true)
+```
+
+4. unet_XXXX.py, line 181-183, the next function in Class threadsafe_iter:
+```python
+    def __next__(self):
+        with self.lock:
+            return self.it.__next__()
 ```
