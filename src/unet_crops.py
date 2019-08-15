@@ -10,7 +10,7 @@ import keras
 import h5py
 
 from keras.layers.normalization import BatchNormalization
-
+import importlib
 
 from keras.optimizers import Nadam
 from keras.callbacks import History
@@ -34,6 +34,12 @@ smooth = 1e-12
 num_channels = 16
 num_mask_channels = 1
 
+def set_keras_backend(backend):
+    if K.backend() != backend:
+        os.environ['KERAS_BACKEND'] = backend
+        importlib.reload(K)
+        assert K.backend() == backend
+
 
 def jaccard_coef(y_true, y_pred):
     intersection = K.sum(y_true * y_pred, axis=[0, -1, -2])
@@ -56,7 +62,7 @@ def jaccard_coef_int(y_true, y_pred):
 
 
 def jaccard_coef_loss(y_true, y_pred):
-    return -K.log(jaccard_coef(y_true, y_pred)) + binary_crossentropy(y_pred, y_true)
+    return -K.log(jaccard_coef(y_true, y_pred)) + K.binary_crossentropy(y_pred, y_true)
 
 
 def get_unet0():
@@ -243,6 +249,8 @@ def read_model(cross=''):
 if __name__ == '__main__':
     data_path = '../data'
     now = datetime.datetime.now()
+    set_keras_backend("theano")
+    K.set_image_dim_ordering('th')
 
     print('[{}] Creating and compiling model...'.format(str(datetime.datetime.now())))
 

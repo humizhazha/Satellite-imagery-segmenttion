@@ -13,7 +13,7 @@ from keras.layers.normalization import BatchNormalization
 import importlib
 
 from keras.optimizers import Nadam
-from keras.callbacks import History, ModelCheckpoint
+from keras.callbacks import History
 import pandas as pd
 from keras.backend import binary_crossentropy
 
@@ -21,6 +21,7 @@ import datetime
 import os
 
 import random
+import threading
 
 from keras.models import model_from_json
 
@@ -38,7 +39,8 @@ def set_keras_backend(backend):
         os.environ['KERAS_BACKEND'] = backend
         importlib.reload(K)
         assert K.backend() == backend
-        
+
+
 def jaccard_coef(y_true, y_pred):
     intersection = K.sum(y_true * y_pred, axis=[0, -1, -2])
     sum_ = K.sum(y_true + y_pred, axis=[0, -1, -2])
@@ -163,10 +165,35 @@ def form_batch(X, y, batch_size):
         random_image = random.randint(0, X.shape[0] - 1)
 
         y_batch[i] = y[random_image, :, random_height: random_height + img_rows, random_width: random_width + img_cols]
-        X_batch[i] = X[random_image, :, random_height: random_height + img_rows, random_width: random_width + img_cols]
+        X_batch[i] = np.array(X[random_image, :, random_height: random_height + img_rows, random_width: random_width + img_cols])
     return X_batch, y_batch
 
 
+class threadsafe_iter:
+    """Takes an iterator/generator and makes it thread-safe by
+    serializing call to the `next` method of given iterator/generator.
+    """
+    def __init__(self, it):
+        self.it = it
+        self.lock = threading.Lock()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        with self.lock:
+            return self.it.__next__()
+
+
+def threadsafe_generator(f):
+    """A decorator that takes a generator function and makes it thread-safe.
+    """
+    def g(*a, **kw):
+        return threadsafe_iter(f(*a, **kw))
+    return g
+
+
+@threadsafe_generator
 def batch_generator(X, y, batch_size, horizontal_flip=False, vertical_flip=False, swap_axis=False):
     while True:
         X_batch, y_batch = form_batch(X, y, batch_size)
@@ -207,8 +234,6 @@ def save_model(model, cross):
 
 
 def save_history(history, suffix):
-    if not os.path.isdir('history'):
-        os.mkdir('history')
     filename = 'history/history_' + suffix + '.csv'
     pd.DataFrame(history.history).to_csv(filename, index=False)
 
@@ -234,47 +259,36 @@ if __name__ == '__main__':
     print('[{}] Reading train...'.format(str(datetime.datetime.now())))
     f = h5py.File(os.path.join(data_path, 'train_16.h5'), 'r')
 
-    X_train = np.array(f['train'])
+    X_train = f['train']
 
-    y_train = np.array(f['train_mask'])[:, 3]
+    y_train = np.array(f['train_mask'])[:, 5]
     y_train = np.expand_dims(y_train, 1)
     print(y_train.shape)
 
     train_ids = np.array(f['train_ids'])
 
-    f.close()
-
-    batch_size = 96
+    batch_size = 128
     nb_epoch = 50
 
     history = History()
-    model_checkpoint = ModelCheckpoint('unet_tmp.hdf5', monitor='loss', verbose=1, save_best_only=True)
-
     callbacks = [
         history,
-        model_checkpoint
     ]
 
-    suffix = 'track_3_'
-    try:
-        print('Loading last checkpoint')
-        model.load_weights('unet_tmp.hdf5')
-    except:
-        print('No checkpoint, passing')
-        pass
+    suffix = 'small_vehicle_'
     model.compile(optimizer=Nadam(lr=1e-3), loss=jaccard_coef_loss, metrics=['binary_crossentropy', jaccard_coef_int])
-    suffix = 'track_3_'
     model.fit_generator(batch_generator(X_train, y_train, batch_size, horizontal_flip=True, vertical_flip=True, swap_axis=True),
                         nb_epoch=nb_epoch,
                         verbose=1,
                         samples_per_epoch=batch_size * 400,
                         callbacks=callbacks,
+                        nb_worker=8
                         )
 
     save_model(model, "{batch}_{epoch}_{suffix}".format(batch=batch_size, epoch=nb_epoch, suffix=suffix))
     save_history(history, suffix)
 
-    suffix = 'track_4_'
+    suffix = 'crops_4_'
     model.compile(optimizer=Nadam(lr=1e-4), loss=jaccard_coef_loss, metrics=['binary_crossentropy', jaccard_coef_int])
     model.fit_generator(
         batch_generator(X_train, y_train, batch_size, horizontal_flip=True, vertical_flip=True, swap_axis=True),
@@ -286,3 +300,4 @@ if __name__ == '__main__':
 
     save_model(model, "{batch}_{epoch}_{suffix}".format(batch=batch_size, epoch=nb_epoch, suffix=suffix))
     save_history(history, suffix)
+    f.close()
