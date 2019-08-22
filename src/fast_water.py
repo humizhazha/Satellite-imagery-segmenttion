@@ -35,8 +35,8 @@ data_path = '../data'
 train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
 
 shapes = pd.read_csv(os.path.join(data_path, '3_shapes.csv'))
-test_ids = shapes.loc[~shapes['image_id'].isin(train_wkt['ImageId'].unique()), 'image_id']
-
+test_ids_sets = ['6110_3_1','6120_2_2','6140_3_1','6110_1_2','6110_4_0','6120_2_0','6120_2_0']
+test_ids = shapes.loc[shapes['image_id'].isin(test_ids_sets), 'image_id']
 
 result = []
 
@@ -80,7 +80,7 @@ for image_id in tqdm(test_ids):
 submission = pd.DataFrame(result, columns=['ImageId', 'ClassType', 'MultipolygonWKT'])
 
 
-sample = sample.drop('MultipolygonWKT', 1)
-submission = sample.merge(submission, on=['ImageId', 'ClassType'], how='left').fillna('MULTIPOLYGON EMPTY')
+# sample = sample.drop('MultipolygonWKT', 1)
+# submission = sample.merge(submission, on=['ImageId', 'ClassType'], how='left').fillna('MULTIPOLYGON EMPTY')
 
 submission.to_csv('temp_water_fast.csv', index=False)

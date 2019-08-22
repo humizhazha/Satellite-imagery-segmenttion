@@ -14,13 +14,16 @@ import numpy as np
 
 data_path = '../data'
 
-train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
+
 gs = pd.read_csv(os.path.join(data_path, 'grid_sizes.csv'), names=['ImageId', 'Xmax', 'Ymin'], skiprows=1)
 
 shapes = pd.read_csv(os.path.join(data_path, '3_shapes.csv'))
-
+test_id = ['6110_3_1','6120_2_2','6140_3_1','6110_1_2','6110_4_0','6120_2_0','6120_2_0']
 
 def cache_train_16():
+    train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
+    train_wkt = train_wkt[~train_wkt['ImageId'].isin(test_id)]
+    
     print('num_train_images =', train_wkt['ImageId'].nunique())
 
     train_shapes = shapes[shapes['image_id'].isin(train_wkt['ImageId'].unique())]

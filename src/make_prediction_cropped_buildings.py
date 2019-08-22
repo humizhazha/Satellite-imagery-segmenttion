@@ -9,7 +9,14 @@ from numba import jit
 
 from keras.models import model_from_json
 import numpy as np
+from keras import backend as K
+import importlib
 
+def set_keras_backend(backend):
+    if K.backend() != backend:
+        os.environ['KERAS_BACKEND'] = backend
+        importlib.reload(K)
+        assert K.backend() == backend
 
 def read_model(cross=''):
     json_name = 'architecture_128_50_buildings_3_' + cross + '.json'
@@ -17,7 +24,8 @@ def read_model(cross=''):
     model = model_from_json(open(os.path.join('../src/cache', json_name)).read())
     model.load_weights(os.path.join('../src/cache', weight_name))
     return model
-
+set_keras_backend("theano")
+K.set_image_dim_ordering('th')
 model = read_model()
 
 sample = pd.read_csv('../data/sample_submission.csv')
@@ -26,14 +34,15 @@ data_path = '../data'
 num_channels = 16
 num_mask_channels = 1
 threashold = 0.3
-
 three_band_path = os.path.join(data_path, 'three_band')
 
 train_wkt = pd.read_csv(os.path.join(data_path, 'train_wkt_v4.csv'))
 gs = pd.read_csv(os.path.join(data_path, 'grid_sizes.csv'), names=['ImageId', 'Xmax', 'Ymin'], skiprows=1)
 shapes = pd.read_csv(os.path.join(data_path, '3_shapes.csv'))
 
-test_ids = shapes.loc[~shapes['image_id'].isin(train_wkt['ImageId'].unique()), 'image_id']
+#test_ids = shapes.loc[~shapes['image_id'].isin(train_wkt['ImageId'].unique()), 'image_id']
+test_ids_sets = ['6110_3_1','6120_2_2','6140_3_1','6110_1_2','6110_4_0','6120_2_0','6120_2_0']
+test_ids = shapes.loc[shapes['image_id'].isin(test_ids_sets), 'image_id']
 
 result = []
 
@@ -95,7 +104,7 @@ for image_id in tqdm(test_ids):
 submission = pd.DataFrame(result, columns=['ImageId', 'ClassType', 'MultipolygonWKT'])
 
 
-sample = sample.drop('MultipolygonWKT', 1)
-submission = sample.merge(submission, on=['ImageId', 'ClassType'], how='left').fillna('MULTIPOLYGON EMPTY')
+#sample = sample.drop('MultipolygonWKT', 1)
+#submission = sample.merge(submission, on=['ImageId', 'ClassType'], how='left').fillna('MULTIPOLYGON EMPTY')
 
 submission.to_csv('temp_building_3.csv', index=False)
